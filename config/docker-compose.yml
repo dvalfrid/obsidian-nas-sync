@@ -10,7 +10,7 @@ services:
       COUCHDB_PASSWORD: ${COUCHDB_ADMIN_PASSWORD}
     volumes:
       # Datavolym — lagras på NAS:en
-      - /volume1/docker/couchdb-obsidian/data:/opt/couchdb/data
+      - /Volume1/docker/couchdb-obsidian/data:/opt/couchdb/data
       # Konfigurationsfil — read-only för säkerhet
       - ./couchdb/local.ini:/opt/couchdb/etc/local.d/local.ini:ro
     # SÄKERHET: Lyssnar bara på localhost — ej åtkomlig utifrån
