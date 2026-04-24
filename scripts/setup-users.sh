@@ -17,13 +17,14 @@ fi
 
 source "$ENV_FILE"
 
-BASE="http://$COUCHDB_ADMIN_USER:$COUCHDB_ADMIN_PASSWORD@localhost:5984"
+BASE="http://localhost:5984"
+AUTH="-u $COUCHDB_ADMIN_USER:$COUCHDB_ADMIN_PASSWORD"
 
 create_user() {
   local username=$1
   local password=$2
   echo "👤 Skapar användare: $username"
-  curl -sf -X PUT "$BASE/_users/org.couchdb.user:$username" \
+  curl -sf $AUTH -X PUT "$BASE/_users/org.couchdb.user:$username" \
     -H "Content-Type: application/json" \
     -d "{\"name\":\"$username\",\"password\":\"$password\",\"roles\":[],\"type\":\"user\"}" \
     > /dev/null && echo "   ✅ Användare '$username' skapad." || echo "   ⚠️  Användare '$username' finns redan (ok)."
@@ -32,7 +33,7 @@ create_user() {
 create_database() {
   local dbname=$1
   echo "🗄️  Skapar databas: $dbname"
-  curl -sf -X PUT "$BASE/$dbname" > /dev/null && \
+  curl -sf $AUTH -X PUT "$BASE/$dbname" > /dev/null && \
     echo "   ✅ Databas '$dbname' skapad." || \
     echo "   ⚠️  Databas '$dbname' finns redan (ok)."
 }
@@ -41,19 +42,19 @@ set_db_permissions() {
   local dbname=$1
   local member=$2
   echo "🔒 Sätter behörighet på '$dbname' → '$member'"
-  curl -sf -X PUT "$BASE/$dbname/_security" \
+  curl -sf $AUTH -X PUT "$BASE/$dbname/_security" \
     -H "Content-Type: application/json" \
     -d "{\"admins\":{\"names\":[],\"roles\":[]},\"members\":{\"names\":[\"$member\"],\"roles\":[]}}" \
-    > /dev/null && echo "   ✅ Behörighet satt."
+    > /dev/null && echo "   ✅ Behörighet satt." || echo "   ❌ Misslyckades."
 }
 
 set_shared_db_permissions() {
   local dbname=$1
   echo "🔒 Sätter delad behörighet på '$dbname' → daniel, linda, shared-user"
-  curl -sf -X PUT "$BASE/$dbname/_security" \
+  curl -sf $AUTH -X PUT "$BASE/$dbname/_security" \
     -H "Content-Type: application/json" \
     -d "{\"admins\":{\"names\":[],\"roles\":[]},\"members\":{\"names\":[\"daniel\",\"linda\",\"shared-user\"],\"roles\":[]}}" \
-    > /dev/null && echo "   ✅ Behörighet satt."
+    > /dev/null && echo "   ✅ Behörighet satt." || echo "   ❌ Misslyckades."
 }
 
 echo ""

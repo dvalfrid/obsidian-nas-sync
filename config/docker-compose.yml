@@ -12,7 +12,7 @@ services:
       # Datavolym — lagras på NAS:en
       - /Volume1/docker/couchdb-obsidian/data:/opt/couchdb/data
       # Konfigurationsfil — read-only för säkerhet
-      - ./couchdb/local.ini:/opt/couchdb/etc/local.d/local.ini:ro
+      - ./couchdb/local.ini:/opt/couchdb/etc/local.d/local.ini
     # SÄKERHET: Lyssnar bara på localhost — ej åtkomlig utifrån
     # All extern trafik går via Cloudflare Tunnel (cloudflared-containern nedan)
     ports:

@@ -11,11 +11,12 @@ ENV_FILE="$SCRIPT_DIR/../config/.env"
 
 source "$ENV_FILE"
 
-BASE="http://$COUCHDB_ADMIN_USER:$COUCHDB_ADMIN_PASSWORD@localhost:5984"
+BASE="http://localhost:5984"
+AUTH="-u $COUCHDB_ADMIN_USER:$COUCHDB_ADMIN_PASSWORD"
 
 for db in vault-daniel vault-linda vault-shared; do
   echo "🗜️  Komprimerar $db..."
-  curl -sf -X POST "$BASE/$db/_compact" \
+  curl -sf $AUTH -X POST "$BASE/$db/_compact" \
     -H "Content-Type: application/json" > /dev/null
   echo "   ✅ Klar."
 done
