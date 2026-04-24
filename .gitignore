@@ -1,0 +1,12 @@
+# Miljövariabler med lösenord och tokens — pushas ALDRIG
+config/.env
+
+# CouchDB-data
+/data/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
