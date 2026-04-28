@@ -13,10 +13,12 @@ services:
       - /Volume1/docker/couchdb-obsidian/data:/opt/couchdb/data
       # Konfigurationsfil — read-only för säkerhet
       - ./couchdb/local.ini:/opt/couchdb/etc/local.d/local.ini
-    # SÄKERHET: Lyssnar bara på localhost — ej åtkomlig utifrån
-    # All extern trafik går via Cloudflare Tunnel (cloudflared-containern nedan)
+    # SÄKERHET: Lyssnar bara på localhost — ej åtkomlig utifrån direkt.
+    # Behövs för admin-scripts (setup-users.sh, compact-databases.sh) som körs från hosten.
     ports:
       - "127.0.0.1:5984:5984"
+    networks:
+      - couchdb-internal
     healthcheck:
       test: ["CMD-SHELL", "curl -f -u $$COUCHDB_USER:$$COUCHDB_PASSWORD http://localhost:5984/_up"]
       interval: 30s
@@ -24,14 +26,22 @@ services:
       retries: 3
 
   cloudflared:
+    # Pinea till specifik version vid uppgradering: https://github.com/cloudflare/cloudflared/releases
     image: cloudflare/cloudflared:latest
     container_name: cloudflared-nas
     restart: unless-stopped
-    # network_mode host behövs för att cloudflared ska nå couchdb på localhost
-    network_mode: host
-    command: tunnel --no-autoupdate run
+    # SÄKERHET: Eget Docker-nätverk istället för network_mode: host.
+    # cloudflared når CouchDB via service-namn (couchdb:5984) inom nätverket —
+    # inte via host-nätverket, vilket begränsar åtkomst till övriga host-portar.
+    networks:
+      - couchdb-internal
+    command: tunnel --no-autoupdate run --url http://couchdb:5984
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       couchdb:
         condition: service_healthy
+
+networks:
+  couchdb-internal:
+    driver: bridge

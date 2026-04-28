@@ -30,6 +30,8 @@ docker compose down
 docker compose up -d
 ```
 
+> **Tips:** Pinea `cloudflare/cloudflared` till en specifik version i `docker-compose.yml` (t.ex. `cloudflare/cloudflared:2025.4.0`) så att uppgraderingar sker medvetet — inte automatiskt vid nästa `docker compose pull`. Hitta senaste versionen på [github.com/cloudflare/cloudflared/releases](https://github.com/cloudflare/cloudflared/releases).
+
 ---
 
 ## Backup
@@ -132,4 +134,12 @@ curl https://obsidian.valfridsson.se/_all_dbs
 # Verifiera att cross-user isolering fungerar
 curl -u daniel:DANIEL_PASS https://obsidian.valfridsson.se/vault-linda
 # Förväntat: {"error":"unauthorized",...}
+
+# Verifiera att Fauxton-adminpanelen är blockerad externt (WAF-regel)
+curl -i https://obsidian.valfridsson.se/_utils/
+# Förväntat: HTTP 403 (Cloudflare blockerar — se docs/2-cloudflare-tunnel.md)
+
+# Verifiera att cloudflared körs utan host-networking
+docker inspect cloudflared-nas | grep -A5 NetworkMode
+# Förväntat: "NetworkMode": "couchdb-internal" (INTE "host")
 ```

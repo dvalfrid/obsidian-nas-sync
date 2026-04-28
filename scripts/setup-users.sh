@@ -18,7 +18,14 @@ fi
 source "$ENV_FILE"
 
 BASE="http://localhost:5984"
-AUTH="-u $COUCHDB_ADMIN_USER:$COUCHDB_ADMIN_PASSWORD"
+
+# Credentials i en temporär fil — syns inte i process-listan (ps aux)
+CURL_CONFIG=$(mktemp /tmp/curlrc-XXXXXX)
+echo "user = \"${COUCHDB_ADMIN_USER}:${COUCHDB_ADMIN_PASSWORD}\"" > "$CURL_CONFIG"
+chmod 600 "$CURL_CONFIG"
+trap "rm -f $CURL_CONFIG" EXIT
+
+AUTH="--config $CURL_CONFIG"
 
 create_user() {
   local username=$1

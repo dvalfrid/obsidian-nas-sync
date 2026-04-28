@@ -28,12 +28,28 @@ until curl -sf "$COUCHDB_URL/_up" > /dev/null 2>&1; do
 done
 echo "✅ CouchDB är uppe."
 
+INIT_SCRIPT=$(mktemp /tmp/livesync-init-XXXXXX.sh)
+echo "⬇️  Laddar ned LiveSync-init script till $INIT_SCRIPT ..."
+curl -sf "https://raw.githubusercontent.com/vrtmrz/obsidian-livesync/main/utils/couchdb/couchdb-init.sh" \
+  -o "$INIT_SCRIPT"
+
+echo ""
+echo "   Granska om du vill innan du fortsätter:"
+echo "   cat $INIT_SCRIPT"
+echo ""
+read -rp "   Kör scriptet? [y/N] " REPLY
+if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
+  echo "   Avbröts. Granska $INIT_SCRIPT och kör det manuellt om du vill fortsätta."
+  exit 1
+fi
+
 echo "🔄 Kör LiveSync-init script..."
-curl -s https://raw.githubusercontent.com/vrtmrz/obsidian-livesync/main/utils/couchdb/couchdb-init.sh | \
-  hostname="$COUCHDB_URL" \
+hostname="$COUCHDB_URL" \
   username="$COUCHDB_ADMIN_USER" \
   password="$COUCHDB_ADMIN_PASSWORD" \
-  bash
+  bash "$INIT_SCRIPT"
+
+rm -f "$INIT_SCRIPT"
 
 echo ""
 echo "✅ CouchDB initierad för LiveSync."
