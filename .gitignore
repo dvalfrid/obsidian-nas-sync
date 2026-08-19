@@ -1,6 +1,9 @@
 # Miljövariabler med lösenord och tokens — pushas ALDRIG
 config/.env
 
+# Instansspecifik Claude-kontext (domän, namn, hårdvara)
+CLAUDE.local.md
+
 # CouchDB-data
 /data/
 

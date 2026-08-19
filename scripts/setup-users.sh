@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================
 # scripts/setup-users.sh
-# Skapar CouchDB-användare och databaser för alla tre vaults.
+# Skapar CouchDB-användare och databaser.
 # Körs EN GÅNG vid installation (eller vid tillägg av vault).
 # =============================================================
 
@@ -16,6 +16,22 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 source "$ENV_FILE"
+
+# =============================================================
+# ANPASSA HÄR — ändra till dina egna användare och databaser.
+# Lösenorden (USER1_PASSWORD, USER2_PASSWORD, SHARED_PASSWORD)
+# definieras i config/.env.
+# =============================================================
+USER1_NAME="alice"
+USER1_DB="vault-alice"
+
+USER2_NAME="bob"
+USER2_DB="vault-bob"
+
+SHARED_NAME="shared-user"
+SHARED_DB="vault-shared"
+SHARED_MEMBERS=("$USER1_NAME" "$USER2_NAME" "$SHARED_NAME")
+# =============================================================
 
 BASE="http://localhost:5984"
 
@@ -57,38 +73,43 @@ set_db_permissions() {
 
 set_shared_db_permissions() {
   local dbname=$1
-  echo "🔒 Sätter delad behörighet på '$dbname' → daniel, linda, shared-user"
+  shift
+  local members=("$@")
+  local json_members
+  json_members=$(printf ',"%s"' "${members[@]}")
+  json_members="[${json_members:1}]"
+  echo "🔒 Sätter delad behörighet på '$dbname' → ${members[*]}"
   curl -sf $AUTH -X PUT "$BASE/$dbname/_security" \
     -H "Content-Type: application/json" \
-    -d "{\"admins\":{\"names\":[],\"roles\":[]},\"members\":{\"names\":[\"daniel\",\"linda\",\"shared-user\"],\"roles\":[]}}" \
+    -d "{\"admins\":{\"names\":[],\"roles\":[]},\"members\":{\"names\":${json_members},\"roles\":[]}}" \
     > /dev/null && echo "   ✅ Behörighet satt." || echo "   ❌ Misslyckades."
 }
 
 echo ""
 echo "=== Skapar användare ==="
-create_user "daniel" "$DANIEL_PASSWORD"
-create_user "linda" "$LINDA_PASSWORD"
-create_user "shared-user" "$SHARED_PASSWORD"
+create_user "$USER1_NAME" "$USER1_PASSWORD"
+create_user "$USER2_NAME" "$USER2_PASSWORD"
+create_user "$SHARED_NAME" "$SHARED_PASSWORD"
 
 echo ""
 echo "=== Skapar databaser ==="
-create_database "vault-daniel"
-create_database "vault-linda"
-create_database "vault-shared"
+create_database "$USER1_DB"
+create_database "$USER2_DB"
+create_database "$SHARED_DB"
 
 echo ""
 echo "=== Sätter behörigheter ==="
-set_db_permissions "vault-daniel" "daniel"
-set_db_permissions "vault-linda" "linda"
-set_shared_db_permissions "vault-shared"
+set_db_permissions "$USER1_DB" "$USER1_NAME"
+set_db_permissions "$USER2_DB" "$USER2_NAME"
+set_shared_db_permissions "$SHARED_DB" "${SHARED_MEMBERS[@]}"
 
 echo ""
 echo "✅ Klart! Sammanfattning:"
 echo ""
-echo "   Databas          Användare"
-echo "   -----------      ---------"
-echo "   vault-daniel  →  daniel (privat)"
-echo "   vault-linda   →  linda (privat)"
-echo "   vault-shared  →  daniel, linda, shared-user (delad)"
+echo "   Databas        Användare"
+echo "   ----------     ---------"
+echo "   $USER1_DB  →  $USER1_NAME (privat)"
+echo "   $USER2_DB  →  $USER2_NAME (privat)"
+echo "   $SHARED_DB  →  ${SHARED_MEMBERS[*]} (delad)"
 echo ""
 echo "   Nästa steg: Se docs/4-obsidian-plugin.md"
