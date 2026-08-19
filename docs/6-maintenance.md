@@ -30,7 +30,7 @@ docker compose down
 docker compose up -d
 ```
 
-> **Tips:** Pinea `cloudflare/cloudflared` till en specifik version i `docker-compose.yml` (t.ex. `cloudflare/cloudflared:2025.4.0`) så att uppgraderingar sker medvetet — inte automatiskt vid nästa `docker compose pull`. Hitta senaste versionen på [github.com/cloudflare/cloudflared/releases](https://github.com/cloudflare/cloudflared/releases).
+> **Tips:** `cloudflare/cloudflared` är pinnad till en specifik version i `docker-compose.yml` (för närvarande `2026.8.2`) så att uppgraderingar sker medvetet — inte automatiskt vid nästa `docker compose pull`. Bumpa versionsnumret manuellt när du vill uppgradera. Hitta senaste versionen på [github.com/cloudflare/cloudflared/releases](https://github.com/cloudflare/cloudflared/releases).
 
 ---
 

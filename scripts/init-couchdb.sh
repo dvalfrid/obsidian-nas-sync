@@ -44,10 +44,25 @@ if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
 fi
 
 echo "🔄 Kör LiveSync-init script..."
-hostname="$COUCHDB_URL" \
-  username="$COUCHDB_ADMIN_USER" \
-  password="$COUCHDB_ADMIN_PASSWORD" \
-  bash "$INIT_SCRIPT"
+# LiveSync-init scriptet kräver numera Deno 2 (kör en provision.ts-baserad
+# setup internt). Finns inte Deno lokalt körs scriptet istället i en
+# tillfällig container på couchdb-internal-nätverket.
+if command -v deno > /dev/null 2>&1; then
+  hostname="$COUCHDB_URL" \
+    username="$COUCHDB_ADMIN_USER" \
+    password="$COUCHDB_ADMIN_PASSWORD" \
+    bash "$INIT_SCRIPT"
+else
+  echo "ℹ️  Deno hittades inte lokalt — kör init-scriptet i en tillfällig container istället."
+  docker run --rm \
+    --network couchdb-internal \
+    -e hostname="http://couchdb:5984" \
+    -e username="$COUCHDB_ADMIN_USER" \
+    -e password="$COUCHDB_ADMIN_PASSWORD" \
+    -v "$INIT_SCRIPT:/tmp/init.sh:ro" \
+    denoland/deno:bookworm \
+    bash /tmp/init.sh
+fi
 
 rm -f "$INIT_SCRIPT"
 

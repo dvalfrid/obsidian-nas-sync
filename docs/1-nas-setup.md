@@ -79,6 +79,8 @@ chmod +x scripts/*.sh
 
 Du ska se flera `{"ok":true}` i utdata.
 
+> **OBS:** LiveSync-projektets init-script kräver **Deno 2** för att köra. Finns inte Deno installerat på NAS:en kör `init-couchdb.sh` det automatiskt i en tillfällig Docker-container istället — inget extra steg krävs, men det förutsätter att Docker kan hämta imagen `denoland/deno:bookworm` (kräver internetåtkomst från NAS:en).
+
 ---
 
 ## Steg 6 — Skapa användare och databaser

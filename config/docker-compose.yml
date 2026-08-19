@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   couchdb:
-    image: couchdb:3.5.1
+    image: couchdb:3.5.2
     container_name: couchdb-obsidian
     restart: unless-stopped
     environment:
@@ -26,8 +26,8 @@ services:
       retries: 3
 
   cloudflared:
-    # Pinea till specifik version vid uppgradering: https://github.com/cloudflare/cloudflared/releases
-    image: cloudflare/cloudflared:latest
+    # Pinnad version — uppgradera medvetet, se https://github.com/cloudflare/cloudflared/releases
+    image: cloudflare/cloudflared:2026.8.2
     container_name: cloudflared-nas
     restart: unless-stopped
     # SÄKERHET: Eget Docker-nätverk istället för network_mode: host.
