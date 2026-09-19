@@ -1,10 +1,10 @@
-# Miljövariabler med lösenord och tokens — pushas ALDRIG
+# Environment variables with passwords and tokens — NEVER committed
 config/.env
 
-# Instansspecifik Claude-kontext (domän, namn, hårdvara)
+# Instance-specific Claude context (domain, names, hardware)
 CLAUDE.local.md
 
-# CouchDB-data
+# CouchDB data
 /data/
 
 # macOS

@@ -1,54 +1,52 @@
-# 2. Cloudflare Tunnel — obsidian.valfridsson.se → NAS
-
-Du har redan tunnlar mot Mac Pro:n (calendar, bluebubble). Det här är ett **separat, nytt tunnel** som pekar direkt mot NAS:en — Mac Pro:n påverkas inte.
+# 2. Cloudflare Tunnel — your domain → your NAS
 
 ---
 
-## Arkitektur
+## Architecture
 
 ```text
 Internet
   │
   ▼
-obsidian.valfridsson.se  (Cloudflare → CNAME → tunnel-id.cfargotunnel.com)
+<your-subdomain>  (Cloudflare → CNAME → tunnel-id.cfargotunnel.com)
   │
-  ▼ HTTPS (Cloudflare terminerar TLS)
-Cloudflare Tunnel (cloudflared-container på NAS)
+  ▼ HTTPS (Cloudflare terminates TLS)
+Cloudflare Tunnel (cloudflared container on your NAS)
   │
-  ▼ HTTP (intern, Docker-nätverk)
-CouchDB på port 5984
+  ▼ HTTP (internal, Docker network)
+CouchDB on port 5984
 ```
 
 ---
 
-## Steg 1 — Skapa nytt tunnel i Cloudflare
+## Step 1 — Create a new tunnel in Cloudflare
 
-1. Gå till [Cloudflare Zero Trust](https://one.dash.cloudflare.com/)
+1. Go to [Cloudflare Zero Trust](https://one.dash.cloudflare.com/)
 2. **Networks → Tunnels → Create a tunnel**
-3. Välj **Cloudflared** som connector-typ
-4. Döp tunneln till `nas-obsidian`
-5. Välj **Docker** som installation
-6. Kopiera **token** som visas (börjar med `eyJ...`)
+3. Choose **Cloudflared** as the connector type
+4. Name the tunnel `nas-obsidian`
+5. Choose **Docker** as the installation method
+6. Copy the **token** shown (starts with `eyJ...`)
 
 ---
 
-## Steg 2 — Lägg till token i .env
+## Step 2 — Add the token to .env
 
-Öppna `config/.env` på NAS:en och lägg in token:
+Open `config/.env` on your NAS and add the token:
 
 ```bash
 nano /volume1/obsidian-nas-sync/config/.env
 ```
 
 ```env
-CLOUDFLARE_TUNNEL_TOKEN=eyJ...TOKEN_HÄR...
+CLOUDFLARE_TUNNEL_TOKEN=eyJ...YOUR_TOKEN_HERE...
 ```
 
 ---
 
-## Steg 3 — Starta om Docker Compose
+## Step 3 — Restart Docker Compose
 
-`cloudflared`-containern är redan definierad i `config/docker-compose.yml`. Starta om för att aktivera den med rätt token:
+The `cloudflared` container is already defined in `config/docker-compose.yml`. Restart it to pick up the token:
 
 ```bash
 cd /volume1/obsidian-nas-sync/config
@@ -58,97 +56,84 @@ docker compose up -d
 
 ---
 
-## Steg 4 — Verifiera att tunneln är ansluten
+## Step 4 — Verify the tunnel is connected
 
-Tillbaka i Cloudflare Zero Trust-dashboarden:
+Back in the Cloudflare Zero Trust dashboard:
 
 - **Networks → Tunnels**
-- Tunneln `nas-obsidian` ska nu visa status **"Healthy"** (grönt)
+- The `nas-obsidian` tunnel should now show status **"Healthy"** (green)
 
 ---
 
-## Steg 5 — Lägg till Public Hostname
+## Step 5 — Add a Public Hostname
 
-I Zero Trust-dashboarden, klicka på `nas-obsidian` → **Configure → Public Hostnames → Add a public hostname** och fyll i:
+In the Zero Trust dashboard, click `nas-obsidian` → **Configure → Public Hostnames → Add a public hostname** and fill in:
 
-| Fält | Värde |
+| Field | Value |
 | --- | --- |
-| Subdomain | `obsidian` |
-| Domain | `valfridsson.se` |
+| Subdomain | `obsidian` (or your own choice) |
+| Domain | `<your-domain>` |
 | Type | `HTTP` |
 | URL | `couchdb:5984` |
 
-Klicka **Save hostname**. Cloudflare skapar DNS-posten (CNAME) automatiskt.
+Click **Save hostname**. Cloudflare creates the DNS record (CNAME) automatically.
 
-> **Varför `couchdb:5984` och inte `localhost:5984`?**
-> cloudflared kör i ett eget Docker-nätverk (ej host-networking). `localhost` inom containern pekar på containern själv, inte hosten. Docker löser upp `couchdb` till rätt container via sitt interna DNS.
-
----
-
-## Steg 6 — Testa HTTPS-åtkomst
-
-Från vilken enhet som helst (inte NAS:en):
-
-```bash
-curl https://obsidian.valfridsson.se/_up
-# Förväntat svar: {"status":"ok"}
-```
-
-Testa att autentisering krävs:
-
-```bash
-curl https://obsidian.valfridsson.se/_all_dbs
-# Förväntat: {"error":"unauthorized","reason":"You are not a server admin."}
-```
+> **Why `couchdb:5984` and not `localhost:5984`?**
+> cloudflared runs in its own Docker network (not host networking). `localhost` inside the container points at the container itself, not the host. Docker resolves `couchdb` to the right container via its internal DNS.
 
 ---
 
-## Säkerhetshärdning i Cloudflare-dashboarden
+## Step 6 — Test HTTPS access
 
-Dessa steg görs en gång i [Cloudflare-dashboarden](https://dash.cloudflare.com/) (inte Zero Trust) under **Websites → valfridsson.se**.
+From any device (not the NAS itself):
 
-### Blockera Fauxton-adminpanelen (`/_utils`)
+```bash
+curl https://<your-subdomain>/_up
+# Expected response: {"status":"ok"}
+```
 
-CouchDB:s inbyggda webbgränssnitt ska inte vara åtkomligt utifrån.
+Test that authentication is required:
 
-1. Gå till **Security → WAF → Custom rules → Create rule**
-2. Fyll i:
+```bash
+curl https://<your-subdomain>/_all_dbs
+# Expected: {"error":"unauthorized","reason":"You are not a server admin."}
+```
+
+---
+
+## Hardening in the Cloudflare dashboard
+
+These steps are done once in the [Cloudflare dashboard](https://dash.cloudflare.com/) (not Zero Trust) under **Websites → \<your-domain\>**.
+
+### Block the Fauxton admin panel (`/_utils`)
+
+CouchDB's built-in web UI shouldn't be reachable from outside.
+
+1. Go to **Security → WAF → Custom rules → Create rule**
+2. Fill in:
    - **Rule name:** Block CouchDB admin panel
    - **Field:** URI Path — **operator:** starts with — **value:** `/_utils`
    - **Action:** Block
-3. Klicka **Deploy**
+3. Click **Deploy**
 
-### Begränsa inloggningsförsök (Rate Limiting)
+### Rate-limit login attempts
 
-Skyddar mot brute-force-attacker mot CouchDB-lösenord.
+Protects against brute-force attacks on CouchDB passwords.
 
-1. Gå till **Security → WAF → Rate limiting rules → Create rule**
-2. Fyll i:
+1. Go to **Security → WAF → Rate limiting rules → Create rule**
+2. Fill in:
    - **Rule name:** Limit CouchDB auth attempts
    - **Field:** URI Path — **operator:** equals — **value:** `/_session`
    - **Threshold:** 15 requests per 10 seconds per IP
    - **Action:** Block — Duration: 10 seconds
-3. Klicka **Deploy**
+3. Click **Deploy**
 
-> `/_session` är CouchDB:s autentiseringsendpoint — dit går varje inloggningsförsök från LiveSync. Rate Limiting-regler kan inte filtrera på subdomän direkt, men `/_session` förekommer inte på dina Mac Pro-subdomäner så det är tillräckligt specifikt.
+> `/_session` is CouchDB's authentication endpoint — every LiveSync login attempt goes there. Rate limiting rules can't filter by subdomain directly, but if you host other unrelated services on the same domain, check that they don't also use a `/_session` path before relying on this rule.
 >
-> **Free-plan-begränsning:** Cloudflare Free tillåter bara 10 sekunders blockering, vilket innebär att en angripare kan försöka ~90 lösenord per minut om de är ihärdiga. Det primära skyddet är därför starka, unika lösenord — inte rate limiting.
+> **Free-plan limitation:** Cloudflare Free only allows a 10-second block, meaning a persistent attacker could try ~90 passwords per minute. The primary protection is therefore strong, unique passwords — not rate limiting.
 
 ---
 
-## Skillnad mot Mac Pro-tunneln
-
-| | Mac Pro-tunnel | NAS-tunnel |
-| --- | --- | --- |
-| Tunnel-namn | (ditt befintliga) | `nas-obsidian` |
-| Subdomäner | calendar, bluebubble | obsidian |
-| Kör på | Mac Pro | TerraMaster NAS |
-| Oberoende? | Ja | Ja |
-
-De två tunnlarna är helt oberoende av varandra. Om Mac Pro:n stängs av fortsätter NAS-tunneln fungera och vice versa.
-
----
-
-## Nästa steg
+## Next step
 
 → [3-couchdb-users.md](3-couchdb-users.md)

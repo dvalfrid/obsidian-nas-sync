@@ -1,105 +1,114 @@
-# Obsidian NAS Sync — Self-hosted LiveSync med TerraMaster & Cloudflare
+# Obsidian NAS Sync — self-hosted LiveSync with Docker & Cloudflare
 
-Komplett self-hosted synklösning för Obsidian med tre separata vaults:
+A complete self-hosted sync solution for Obsidian with any number of vaults — for example, three:
 
-- **Daniel** — privat vault
-- **Linda** — privat vault  
-- **Shared** — delad familjevault
+- **A private vault** for one person
+- **A private vault** for another person
+- **A shared vault** for both
 
-Synken sker via [Self-hosted LiveSync](https://github.com/vrtmrz/obsidian-livesync) och en CouchDB-instans på din TerraMaster F4-424 Pro, exponerad säkert via Cloudflare Tunnel (HTTPS, ingen öppen port i routern).
+Sync happens via [Self-hosted LiveSync](https://github.com/vrtmrz/obsidian-livesync) and a CouchDB instance on your own NAS, exposed securely via a Cloudflare Tunnel (HTTPS, no open port on your router).
 
 ---
 
-## Arkitektur
+## Architecture
 
 ```
-[Obsidian: Daniel]  ──┐
-[Obsidian: Linda]   ──┤── HTTPS ──► obsidian.valfridsson.se ──► Cloudflare Tunnel ──► CouchDB på NAS
-[Obsidian: Shared]  ──┘
-        (alla enheter: Windows, macOS, iOS)
+[Obsidian: user 1]  ──┐
+[Obsidian: user 2]  ──┤── HTTPS ──► <your-subdomain> ──► Cloudflare Tunnel ──► CouchDB on your NAS
+[Obsidian: shared]  ──┘
+        (any device: Windows, macOS, iOS)
 ```
 
-**Tre databaser i CouchDB:**
-- `vault-daniel`
-- `vault-linda`
+**Three databases in CouchDB by default** (the example used throughout this repo's scripts and docs):
+- `vault-alice`
+- `vault-bob`
 - `vault-shared`
 
----
-
-## Förkrav
-
-- TerraMaster F4-424 Pro med TOS 5 eller TOS 6
-- Docker och Portainer aktiverat på NAS:en
-- SSH-åtkomst till NAS:en
-- Cloudflare-konto med `valfridsson.se` konfigurerat
-- Obsidian installerat på alla enheter
+Rename these to your own vaults — see the "CUSTOMIZE HERE" block in `scripts/setup-users.sh`.
 
 ---
 
-## Dokumentation
+## Prerequisites
 
-| Fil | Innehåll |
+- A NAS or Linux host with Docker (and, on a NAS, its GUI like Portainer) enabled
+- SSH access to that host
+- A Cloudflare account with your own domain configured
+- Obsidian installed on every device
+
+---
+
+## Documentation
+
+| File | Contents |
 |---|---|
-| [docs/1-nas-setup.md](docs/1-nas-setup.md) | CouchDB på NAS via Docker |
-| [docs/2-cloudflare-tunnel.md](docs/2-cloudflare-tunnel.md) | Cloudflare Tunnel mot NAS |
-| [docs/3-couchdb-users.md](docs/3-couchdb-users.md) | Användare och databaser i CouchDB |
-| [docs/4-obsidian-plugin.md](docs/4-obsidian-plugin.md) | LiveSync-plugin på varje enhet |
-| [docs/5-sharing.md](docs/5-sharing.md) | Dela vault med Linda |
-| [docs/6-maintenance.md](docs/6-maintenance.md) | Backup, underhåll, felsökning |
+| [docs/1-nas-setup.md](docs/1-nas-setup.md) | CouchDB on your NAS via Docker |
+| [docs/2-cloudflare-tunnel.md](docs/2-cloudflare-tunnel.md) | Cloudflare Tunnel to your NAS |
+| [docs/3-couchdb-users.md](docs/3-couchdb-users.md) | Users and databases in CouchDB |
+| [docs/4-obsidian-plugin.md](docs/4-obsidian-plugin.md) | LiveSync plugin on every device |
+| [docs/5-sharing.md](docs/5-sharing.md) | Sharing a vault between multiple people |
+| [docs/6-maintenance.md](docs/6-maintenance.md) | Backup, maintenance, troubleshooting |
 
 ---
 
-## Snabbstart
+## Quick start
 
 ```bash
-# Klona repot på din NAS (via SSH)
-git clone https://github.com/DITT_REPO/obsidian-nas-sync
+# Clone the repo onto your NAS (via SSH)
+git clone https://github.com/dvalfrid/obsidian-nas-sync
 cd obsidian-nas-sync
 
-# Kopiera och redigera miljövariabler
+# Copy and edit environment variables
 cp config/.env.example config/.env
 nano config/.env
 
-# Starta CouchDB
-docker compose -f config/docker-compose.yml up -d
+# Start CouchDB and cloudflared
+cd config
+docker compose up -d
+cd ..
 
-# Initiera CouchDB
+# Initialize CouchDB for LiveSync
 ./scripts/init-couchdb.sh
 
-# Skapa användare och databaser
+# Create users and databases
 ./scripts/setup-users.sh
 ```
 
-Se fullständiga instruktioner i [docs/1-nas-setup.md](docs/1-nas-setup.md).
+Before the last step, edit the "CUSTOMIZE HERE" block at the top of `scripts/setup-users.sh` (and the `DATABASES` list in `scripts/compact-databases.sh`) to use your own usernames and database names instead of the `alice`/`bob`/`shared-user` example.
+
+See the full walkthrough in [docs/1-nas-setup.md](docs/1-nas-setup.md).
 
 ---
 
-## Säkerhet
+## Security
 
-- Inga portar öppnade i routern — all trafik via Cloudflare Tunnel
-- HTTPS med giltigt certifikat (automatiskt via Cloudflare)
-- Separata CouchDB-användare per person — Linda kan inte nå Daniels vault
-- Gemensamt konto för shared vault
-- End-to-end-kryptering i LiveSync (valfritt men rekommenderas)
-- CouchDB lyssnar inte på extern IP — bara localhost, Cloudflared når den inifrån
+- No ports opened on your router — all traffic goes through the Cloudflare Tunnel
+- HTTPS with a valid certificate (automatic via Cloudflare)
+- Separate CouchDB user per person — one private vault can't be reached by another person's user
+- A shared account for the shared vault
+- End-to-end encryption in LiveSync (optional but recommended)
+- CouchDB doesn't listen on an external IP — only localhost; cloudflared reaches it from inside its own Docker network
 
 ---
 
-## Filstruktur
+## File structure
 
 ```
 obsidian-nas-sync/
 ├── README.md
-├── CLAUDE.md                        ← Instruktioner för AI-assistenten
+├── CLAUDE.md                        ← Context for AI assistants
+├── LICENSE
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
 ├── config/
-│   ├── .env.example                 ← Mall för miljövariabler
-│   ├── docker-compose.yml           ← CouchDB + Cloudflared
+│   ├── .env.example                 ← Template for environment variables
+│   ├── docker-compose.yml           ← CouchDB + cloudflared
 │   └── couchdb/
-│       └── local.ini                ← CouchDB-konfiguration
+│       └── local.ini                ← CouchDB configuration
 ├── scripts/
-│   ├── init-couchdb.sh              ← Initierar CouchDB-inställningar
-│   ├── setup-users.sh               ← Skapar användare och databaser
-│   └── compact-databases.sh         ← Komprimerar databaser (underhåll)
+│   ├── init-couchdb.sh              ← Initializes CouchDB settings
+│   ├── setup-users.sh               ← Creates users and databases
+│   └── compact-databases.sh         ← Compacts databases (maintenance)
 └── docs/
     ├── 1-nas-setup.md
     ├── 2-cloudflare-tunnel.md
@@ -108,3 +117,11 @@ obsidian-nas-sync/
     ├── 5-sharing.md
     └── 6-maintenance.md
 ```
+
+---
+
+## License
+
+This repo's own code (scripts, Docker Compose file, docs) is [MIT-licensed](LICENSE). It orchestrates, but does not bundle, third-party components that keep their own licenses: [CouchDB](https://couchdb.apache.org/) (Apache 2.0), [cloudflared](https://github.com/cloudflare/cloudflared) (Apache 2.0), and the [Self-hosted LiveSync](https://github.com/vrtmrz/obsidian-livesync) Obsidian plugin (its own license).
+
+See [SECURITY.md](SECURITY.md) for the security policy and [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute.

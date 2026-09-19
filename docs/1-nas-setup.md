@@ -1,32 +1,32 @@
-# 1. NAS-setup — CouchDB via Docker
+# 1. NAS setup — CouchDB via Docker
 
-## Förkrav
+## Prerequisites
 
-- SSH aktiverat på NAS:en (TOS → Kontrollpanel → Terminal)
-- Docker och Portainer aktiverade i TOS
+- SSH enabled on your NAS (TOS → Control Panel → Terminal)
+- Docker and Portainer enabled in TOS
 
 ---
 
-## Steg 1 — Klona repot till NAS:en
+## Step 1 — Clone the repo onto your NAS
 
-SSH in på NAS:en och klona repot:
+SSH into your NAS and clone the repo:
 
 ```bash
 ssh admin@<nas-ip>
 cd /volume1
-git clone https://github.com/DITT_REPO/obsidian-nas-sync
+git clone https://github.com/dvalfrid/obsidian-nas-sync
 cd obsidian-nas-sync
 ```
 
-Om git inte finns installerat:
+If git isn't installed:
 
 ```bash
-# Installera git via TOS App Center, eller kör direkt via Docker i nästa steg
+# Install git via the TOS App Center, or run it via Docker directly in the next step
 ```
 
 ---
 
-## Steg 2 — Skapa datamapp
+## Step 2 — Create a data folder
 
 ```bash
 mkdir -p /volume1/docker/couchdb-obsidian/data
@@ -34,42 +34,42 @@ mkdir -p /volume1/docker/couchdb-obsidian/data
 
 ---
 
-## Steg 3 — Skapa miljöfil
+## Step 3 — Create the environment file
 
 ```bash
 cp config/.env.example config/.env
 nano config/.env
 ```
 
-Fyll i alla värden — välj starka, unika lösenord för varje användare. Använd t.ex. en lösenordshanterare för att generera dem.
+Fill in all the values — choose strong, unique passwords for every user. Consider using a password manager to generate them.
 
-> **OBS:** `.env` pushas aldrig till GitHub. Kontrollera att `.gitignore` innehåller `config/.env`.
+> **Note:** `.env` is never pushed to GitHub. Check that `.gitignore` contains `config/.env`.
 
 ---
 
-## Steg 4 — Starta CouchDB
+## Step 4 — Start CouchDB
 
 ```bash
 cd config
 docker compose up -d
 ```
 
-Verifiera att containern kör:
+Verify the container is running:
 
 ```bash
 docker ps | grep couchdb
 ```
 
-Verifiera att CouchDB svarar:
+Verify CouchDB responds:
 
 ```bash
 curl http://localhost:5984/_up
-# Förväntat svar: {"status":"ok"}
+# Expected response: {"status":"ok"}
 ```
 
 ---
 
-## Steg 5 — Initiera CouchDB för LiveSync
+## Step 5 — Initialize CouchDB for LiveSync
 
 ```bash
 cd /volume1/obsidian-nas-sync
@@ -77,45 +77,44 @@ chmod +x scripts/*.sh
 ./scripts/init-couchdb.sh
 ```
 
-Du ska se flera `{"ok":true}` i utdata.
+You should see several `{"ok":true}` in the output.
 
-> **OBS:** LiveSync-projektets init-script kräver **Deno 2** för att köra. Finns inte Deno installerat på NAS:en kör `init-couchdb.sh` det automatiskt i en tillfällig Docker-container istället — inget extra steg krävs, men det förutsätter att Docker kan hämta imagen `denoland/deno:bookworm` (kräver internetåtkomst från NAS:en).
+> **Note:** the LiveSync project's init script requires **Deno 2** to run. If Deno isn't installed on your NAS, `init-couchdb.sh` automatically runs it in a temporary Docker container instead — no extra step needed, but this does require Docker to be able to pull the `denoland/deno:bookworm` image (i.e. internet access from the NAS).
 
 ---
 
-## Steg 6 — Skapa användare och databaser
+## Step 6 — Create users and databases
+
+First, edit the "CUSTOMIZE HERE" block at the top of `scripts/setup-users.sh` to use your own usernames and database names instead of the `alice`/`bob`/`shared-user` example (and add matching passwords to `config/.env` — see [docs/3-couchdb-users.md](docs/3-couchdb-users.md)).
 
 ```bash
 ./scripts/setup-users.sh
 ```
 
-Kontrollera resultatet i CouchDB-admin (Fauxton):
+Check the result in the CouchDB admin UI (Fauxton):
 
 ```
 http://localhost:5984/_utils/
 ```
 
-Logga in med admin-credentials och verifiera att tre databaser finns:
-- `vault-daniel`
-- `vault-linda`
-- `vault-shared`
+Log in with your admin credentials and verify that your databases exist.
 
 ---
 
-## Verifiera säkerhetskonfiguration
+## Verify the security configuration
 
-CouchDB ska bara lyssna på localhost — testa att den INTE är åtkomlig utifrån:
+CouchDB should only listen on localhost — test that it is NOT reachable from outside:
 
 ```bash
-# Kör från en annan maskin i nätverket — ska MISSLYCKAS
+# Run from another machine on the network — should FAIL
 curl http://<nas-ip>:5984/_up
-# Förväntat: connection refused eller timeout
+# Expected: connection refused or timeout
 ```
 
-All extern åtkomst sker via Cloudflare Tunnel (se nästa steg).
+All external access happens via the Cloudflare Tunnel (see the next step).
 
 ---
 
-## Nästa steg
+## Next step
 
 → [2-cloudflare-tunnel.md](2-cloudflare-tunnel.md)

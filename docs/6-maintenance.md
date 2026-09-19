@@ -1,27 +1,27 @@
-# 6. Underhåll, backup och felsökning
+# 6. Maintenance, backup, and troubleshooting
 
 ---
 
-## Regelbundet underhåll
+## Regular maintenance
 
-### Komprimera databaser (månadsvis)
+### Compact databases (monthly)
 
-CouchDB sparar alla revisioner av dina anteckningar. Utan komprimering växer databasfilen i onödan.
+CouchDB keeps every revision of your notes. Without compaction, the database file grows unnecessarily.
 
 ```bash
 cd /volume1/obsidian-nas-sync
 ./scripts/compact-databases.sh
 ```
 
-Eller sätt upp ett automatiskt cron-jobb via TOS (Kontrollpanel → Schemalagda uppgifter):
+Or set up an automatic cron job via TOS (Control Panel → Scheduled Tasks):
 
 ```
 0 3 1 * * /volume1/obsidian-nas-sync/scripts/compact-databases.sh
 ```
 
-(Kör kl 03:00 den 1:a varje månad)
+(Runs at 3:00 AM on the 1st of every month)
 
-### Uppdatera Docker-images
+### Update Docker images
 
 ```bash
 cd /volume1/obsidian-nas-sync/config
@@ -30,116 +30,116 @@ docker compose down
 docker compose up -d
 ```
 
-> **Tips:** `cloudflare/cloudflared` är pinnad till en specifik version i `docker-compose.yml` (för närvarande `2026.8.2`) så att uppgraderingar sker medvetet — inte automatiskt vid nästa `docker compose pull`. Bumpa versionsnumret manuellt när du vill uppgradera. Hitta senaste versionen på [github.com/cloudflare/cloudflared/releases](https://github.com/cloudflare/cloudflared/releases).
+> **Tip:** `cloudflare/cloudflared` is pinned to a specific version in `docker-compose.yml` (currently `2026.8.2`) so upgrades happen deliberately — not automatically on the next `docker compose pull`. Bump the version number manually when you want to upgrade. Find the latest version at [github.com/cloudflare/cloudflared/releases](https://github.com/cloudflare/cloudflared/releases).
 
 ---
 
 ## Backup
 
-### Vad som behöver backas upp
+### What needs backing up
 
-| Vad | Var | Varför |
+| What | Where | Why |
 |---|---|---|
-| CouchDB-data | `/volume1/docker/couchdb-obsidian/data/` | Alla anteckningar |
-| Konfiguration | `/volume1/obsidian-nas-sync/config/.env` | Lösenord och token |
-| Repo | GitHub | Allt annat |
+| CouchDB data | `/volume1/docker/couchdb-obsidian/data/` | All your notes |
+| Configuration | `/volume1/obsidian-nas-sync/config/.env` | Passwords and token |
+| Repo | GitHub | Everything else |
 
-### Backup med TerraMaster Duple Backup
+### Backup with TerraMaster Duple Backup
 
-TOS har inbyggd Duple Backup — konfigurera den att backa upp `/volume1/docker/couchdb-obsidian/data/` till en annan disk eller extern källa.
+TOS has a built-in Duple Backup tool — configure it to back up `/volume1/docker/couchdb-obsidian/data/` to another disk or an external destination.
 
-### Manuell backup
+### Manual backup
 
 ```bash
-# Skapa en komprimerad backup av CouchDB-data
+# Create a compressed backup of the CouchDB data
 tar -czf ~/couchdb-backup-$(date +%Y%m%d).tar.gz \
   /volume1/docker/couchdb-obsidian/data/
 ```
 
-> **OBS:** LiveSync håller automatiskt en fullständig lokal kopia av vaulten på varje enhet. Om NAS:en kraschar har du fortfarande alla anteckningar lokalt på din dator/telefon.
+> **Note:** LiveSync automatically keeps a full local copy of the vault on every device. If your NAS crashes, you still have all your notes locally on your computer/phone.
 
 ---
 
-## Felsökning
+## Troubleshooting
 
-### CouchDB svarar inte
+### CouchDB isn't responding
 
 ```bash
-# Kontrollera att containern kör
+# Check that the container is running
 docker ps | grep couchdb
 
-# Visa loggar
+# View logs
 docker logs couchdb-obsidian --tail 50
 
-# Starta om
+# Restart it
 docker restart couchdb-obsidian
 ```
 
-### Cloudflare Tunnel är nere
+### The Cloudflare Tunnel is down
 
 ```bash
-# Kontrollera att containern kör
+# Check that the container is running
 docker ps | grep cloudflared
 
-# Visa loggar
+# View logs
 docker logs cloudflared-nas --tail 50
 
-# Starta om
+# Restart it
 docker restart cloudflared-nas
 ```
 
-Kontrollera även i [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → Networks → Tunnels att statusen är Healthy.
+Also check in [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → Networks → Tunnels that the status is Healthy.
 
-### LiveSync synkar inte
+### LiveSync isn't syncing
 
-1. Kontrollera att `https://obsidian.valfridsson.se/_up` svarar
-2. I Obsidian → LiveSync-inställningar → **Test** (Connection test)
-3. Öppna Obsidian Developer Tools (Ctrl+Shift+I) → Console för felmeddelanden
-4. Kontrollera att rätt databas och credentials används
+1. Check that `https://<your-subdomain>/_up` responds
+2. In Obsidian → LiveSync settings → **Test** (Connection test)
+3. Open Obsidian Developer Tools (Ctrl+Shift+I) → Console for error messages
+4. Check that the correct database and credentials are being used
 
-### "Unauthorized" trots rätt lösenord
+### "Unauthorized" despite the correct password
 
-CouchDB-sessioner löper ut. Prova:
-- Stäng och öppna om Obsidian
-- Eller: LiveSync → Disconnect → Reconnect
+CouchDB sessions expire. Try:
+- Closing and reopening Obsidian
+- Or: LiveSync → Disconnect → Reconnect
 
-### Databasen är full / prestanda är dålig
+### Database is full / performance is poor
 
-Kör `compact-databases.sh` (se ovan).
-
----
-
-## Återställa efter NAS-haveri
-
-1. Installera Docker och klona repot på ny/återställd NAS
-2. Kopiera CouchDB-backup till `/volume1/docker/couchdb-obsidian/data/`
-3. Återskapa `config/.env` med dina sparade credentials
-4. Kör `docker compose up -d`
-5. Verifiera med `curl https://obsidian.valfridsson.se/_up`
-
-Inga ändringar behövs i Obsidian på klientenheterna — de ansluter automatiskt när servern är tillbaka.
+Run `compact-databases.sh` (see above).
 
 ---
 
-## Säkerhetskontroll (kör ibland)
+## Recovering after a NAS failure
+
+1. Install Docker and clone the repo on the new/restored NAS
+2. Copy the CouchDB backup to `/volume1/docker/couchdb-obsidian/data/`
+3. Recreate `config/.env` with your saved credentials
+4. Run `docker compose up -d`
+5. Verify with `curl https://<your-subdomain>/_up`
+
+No changes are needed in Obsidian on client devices — they reconnect automatically once the server is back.
+
+---
+
+## Security check (run occasionally)
 
 ```bash
-# Verifiera att CouchDB INTE är åtkomlig direkt (ska misslyckas)
+# Verify CouchDB is NOT directly reachable (should fail)
 curl http://<nas-ip>:5984/_up
 
-# Verifiera att anonym åtkomst är blockerad
-curl https://obsidian.valfridsson.se/_all_dbs
-# Förväntat: {"error":"unauthorized",...}
+# Verify anonymous access is blocked
+curl https://<your-subdomain>/_all_dbs
+# Expected: {"error":"unauthorized",...}
 
-# Verifiera att cross-user isolering fungerar
-curl -u daniel:DANIEL_PASS https://obsidian.valfridsson.se/vault-linda
-# Förväntat: {"error":"unauthorized",...}
+# Verify cross-user isolation works
+curl -u alice:ALICE_PASS https://<your-subdomain>/vault-bob
+# Expected: {"error":"unauthorized",...}
 
-# Verifiera att Fauxton-adminpanelen är blockerad externt (WAF-regel)
-curl -i https://obsidian.valfridsson.se/_utils/
-# Förväntat: HTTP 403 (Cloudflare blockerar — se docs/2-cloudflare-tunnel.md)
+# Verify the Fauxton admin panel is blocked externally (WAF rule)
+curl -i https://<your-subdomain>/_utils/
+# Expected: HTTP 403 (Cloudflare blocking it — see docs/2-cloudflare-tunnel.md)
 
-# Verifiera att cloudflared körs utan host-networking
+# Verify cloudflared is running without host networking
 docker inspect cloudflared-nas | grep -A5 NetworkMode
-# Förväntat: "NetworkMode": "couchdb-internal" (INTE "host")
+# Expected: "NetworkMode": "couchdb-internal" (NOT "host")
 ```

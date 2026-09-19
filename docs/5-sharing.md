@@ -1,78 +1,78 @@
-# 5. Dela vault med Linda
+# 5. Sharing a vault between multiple people
 
 ---
 
-## Hur delningen fungerar
+## How sharing works
 
 ```
-Daniel (vault-shared) ──┐
-                         ├──► CouchDB: vault-shared ◄──┐
-Linda  (vault-shared) ──┘                               │
-                                                        │
-                    Båda ser samma innehåll i realtid ──┘
+alice (vault-shared) ──┐
+                        ├──► CouchDB: vault-shared ◄──┐
+bob   (vault-shared) ──┘                              │
+                                                       │
+                 Both see the same content live ──────┘
 ```
 
-Den delade vaulten fungerar som en gemensam anteckningsbok. Allt Daniel skriver syns hos Linda och vice versa — i realtid (LiveSync-läge) eller med kort fördröjning (Periodic-läge).
+The shared vault works like a joint notebook. Anything alice writes shows up for bob and vice versa — in real time (LiveSync mode) or with a short delay (Periodic mode).
 
 ---
 
-## Dela Setup URI med Linda
+## Sharing the Setup URI
 
-Det enklaste sättet att få Linda igång på shared-vaulten:
+The easiest way to get the other member started on the shared vault:
 
-### 1. Daniel genererar Setup URI
+### 1. Generate a Setup URI
 
-På Daniels enhet, i shared-vaultens LiveSync-inställningar:
-- Gå till **Setup → Copy setup URI**
-- Du får en lång krypterad sträng
+On one device, in the shared vault's LiveSync settings:
+- Go to **Setup → Copy setup URI**
+- You get a long, encrypted string
 
-### 2. Skicka URI + passphrase till Linda
+### 2. Send the URI + passphrase to the other member
 
-Dela via ett säkert medium (t.ex. AirDrop, Signal, eller fysiskt):
-- Setup URI:n
-- Den gemensamma passphrases för shared-vaulten
+Share it over a secure channel (e.g. AirDrop, Signal, or in person):
+- The Setup URI
+- The shared vault's common passphrase
 
-> **Viktigt:** Dela inte via okrypterad e-post eller SMS.
+> **Important:** Don't share these over unencrypted email or SMS.
 
-### 3. Linda konfigurerar sin enhet
+### 3. The other member configures their device
 
-1. Installera Obsidian och skapa en ny (tom) vault
-2. Installera LiveSync-pluginet
-3. LiveSync-inställningar → **"Connect with setup URI"**
-4. Klistra in URI:n
-5. Ange passphrases
-6. Klart — vaulten synkas ner automatiskt
-
----
-
-## Hantera konflikter
-
-Om Daniel och Linda redigerar **samma anteckning samtidigt** (på offline-enheter som sedan synkar) hanterar LiveSync det automatiskt:
-
-- LiveSync **detekterar konflikten** och sparar båda versionerna
-- En notis visas i Obsidian
-- Du väljer manuellt vilken version som gäller, eller slår ihop dem
-
-Det händer sällan om ni har bra nätverksuppkoppling — LiveSync synkar i realtid och förhindrar de flesta konflikter.
+1. Install Obsidian and create a new (empty) vault
+2. Install the LiveSync plugin
+3. LiveSync settings → **"Connect with setup URI"**
+4. Paste the URI
+5. Enter the passphrase
+6. Done — the vault syncs down automatically
 
 ---
 
-## Tips för delad vault
+## Handling conflicts
 
-- Skapa en tydlig mappstruktur (`Daniel/`, `Linda/`, `Gemensamt/`)
-- Undvik att redigera exakt samma fil samtidigt
-- Använd Obsidians inbyggda taggar för att organisera gemensamma anteckningar
+If two members edit **the same note at the same time** (e.g. on offline devices that sync later), LiveSync handles it automatically:
 
----
+- LiveSync **detects the conflict** and keeps both versions
+- A notice appears in Obsidian
+- You manually choose which version wins, or merge them
 
-## Vad som INTE delas
-
-- Daniels `vault-daniel` — bara Daniel kan se och redigera
-- Lindas `vault-linda` — bara Linda kan se och redigera
-- Plugin-inställningar och teman är separata per vault
+This happens rarely with a decent network connection — LiveSync syncs in real time and prevents most conflicts.
 
 ---
 
-## Nästa steg
+## Tips for a shared vault
+
+- Create a clear folder structure, e.g. `Alice/`, `Bob/`, `Shared/`
+- Avoid editing the exact same file at the same time
+- Use Obsidian's built-in tags to organize shared notes
+
+---
+
+## What is NOT shared
+
+- alice's `vault-alice` — only alice can see and edit it
+- bob's `vault-bob` — only bob can see and edit it
+- Plugin settings and themes — these are separate per vault
+
+---
+
+## Next step
 
 → [6-maintenance.md](6-maintenance.md)

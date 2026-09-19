@@ -1,109 +1,109 @@
-# 4. Obsidian LiveSync — Plugin på varje enhet
+# 4. Obsidian LiveSync — plugin on every device
 
-Du konfigurerar LiveSync en gång per vault, på din första enhet. Sedan används en **Setup URI** för att snabbt konfigurera övriga enheter.
-
----
-
-## Installera pluginet (alla enheter)
-
-1. Öppna Obsidian → **Settings → Community plugins**
-2. Stäng av Safe mode om det är på
-3. Klicka **Browse**
-4. Sök på `Self-hosted LiveSync`
-5. Installera och aktivera
+You configure LiveSync once per vault, on your first device. After that, a **Setup URI** lets you quickly configure additional devices.
 
 ---
 
-## Daniels privata vault
+## Install the plugin (all devices)
 
-### Första enheten (Windows/Mac)
+1. Open Obsidian → **Settings → Community plugins**
+2. Turn off Safe mode if it's on
+3. Click **Browse**
+4. Search for `Self-hosted LiveSync`
+5. Install and enable it
 
-1. Skapa eller öppna en vault i Obsidian
-2. Öppna **LiveSync-inställningar** (plugin-ikonen eller Settings → Self-hosted LiveSync)
-3. Gå till fliken **Setup**
-4. Välj **"Open setup wizard"**
-5. Välj **"Set up manually"**
-6. Fyll i:
+---
 
-| Fält | Värde |
+## A private vault (e.g. alice's)
+
+### First device (Windows/Mac)
+
+1. Create or open a vault in Obsidian
+2. Open **LiveSync settings** (the plugin icon, or Settings → Self-hosted LiveSync)
+3. Go to the **Setup** tab
+4. Choose **"Open setup wizard"**
+5. Choose **"Set up manually"**
+6. Fill in:
+
+| Field | Value |
 |---|---|
-| URI | `https://obsidian.valfridsson.se` |
-| Username | `daniel` |
-| Password | Ditt Daniel-lösenord |
-| Database | `vault-daniel` |
+| URI | `https://<your-subdomain>` |
+| Username | `alice` |
+| Password | alice's password |
+| Database | `vault-alice` |
 
-7. Tryck **Test** — ska visa grönt
-8. Tryck **Next**
-9. Välj sync-läge: **LiveSync** (rekommenderas — realtidssynk)
-10. Aktivera **End-to-end encryption** → välj en passphrase och spara den säkert
-11. Tryck **Apply**
+7. Press **Test** — should show green
+8. Press **Next**
+9. Choose a sync mode: **LiveSync** (recommended — real-time sync)
+10. Enable **End-to-end encryption** → choose a passphrase and save it securely
+11. Press **Apply**
 
-> **Spara din passphrase!** Utan den kan du inte läsa dina krypterade anteckningar på en ny enhet.
+> **Save your passphrase!** Without it you can't read your encrypted notes on a new device.
 
-### Ytterligare enheter (Windows, Mac, iOS)
+### Additional devices (Windows, Mac, iOS)
 
-1. På den konfigurerade enheten: LiveSync-inställningar → **"Copy setup URI"**
-2. Du får en krypterad URI-sträng — kopiera den
-3. På den nya enheten: installera LiveSync → **"Connect with setup URI"**
-4. Klistra in URI:n och ange din passphrase
-5. Synk startar automatiskt
-
----
-
-## Lindas privata vault
-
-Samma process som ovan, men med Lindas credentials:
-
-| Fält | Värde |
-|---|---|
-| URI | `https://obsidian.valfridsson.se` |
-| Username | `linda` |
-| Password | Lindas lösenord |
-| Database | `vault-linda` |
-
-Linda genererar sin egna Setup URI för sina enheter.
+1. On the already-configured device: LiveSync settings → **"Copy setup URI"**
+2. You get an encrypted URI string — copy it
+3. On the new device: install LiveSync → **"Connect with setup URI"**
+4. Paste the URI and enter your passphrase
+5. Sync starts automatically
 
 ---
 
-## Den delade familje-vaulten
+## Another private vault (e.g. bob's)
 
-Båda installerar ett **separat** Obsidian-vault (Obsidian stöder flera vaults) och konfigurerar LiveSync med:
+Same process as above, with bob's credentials:
 
-| Fält | Värde |
+| Field | Value |
 |---|---|
-| URI | `https://obsidian.valfridsson.se` |
+| URI | `https://<your-subdomain>` |
+| Username | `bob` |
+| Password | bob's password |
+| Database | `vault-bob` |
+
+bob generates their own Setup URI for their devices.
+
+---
+
+## The shared vault
+
+Everyone installs a **separate** Obsidian vault (Obsidian supports multiple vaults) and configures LiveSync with:
+
+| Field | Value |
+|---|---|
+| URI | `https://<your-subdomain>` |
 | Username | `shared-user` |
-| Password | Shared-lösenordet |
+| Password | the shared password |
 | Database | `vault-shared` |
 
-> **OBS:** Använd **samma passphrase** för den delade vaulten på Daniels och Lindas enheter — annars kan de inte läsa varandras anteckningar.
+> **Note:** Use the **same passphrase** for the shared vault on every member's devices — otherwise they can't read each other's notes.
 
-**Rekommenderat:** Daniel konfigurerar shared-vaulten på sin första enhet och genererar Setup URI. Linda använder den URI:n för att konfigurera shared-vaulten på sina enheter. Då delar de automatiskt samma krypteringsinställningar.
-
----
-
-## iOS-specifikt
-
-LiveSync fungerar fullt ut på iOS via Obsidian-appen. HTTPS via Cloudflare Tunnel är ett krav (vilket du redan har).
-
-1. Installera **Obsidian** från App Store
-2. Skapa en ny vault (lokal lagring)
-3. Installera LiveSync-pluginet (Community plugins i iOS-appen)
-4. Använd Setup URI från en av dina andra enheter
-5. Synk startar direkt
+**Recommended:** one person configures the shared vault on their first device and generates a Setup URI. The others use that URI to configure the shared vault on their own devices — that way everyone automatically shares the same encryption settings.
 
 ---
 
-## Sync-lägen förklarat
+## iOS-specific notes
 
-| Läge | Beskrivning | Bra för |
+LiveSync works fully on iOS via the Obsidian app. HTTPS via the Cloudflare Tunnel is a requirement (which you already have).
+
+1. Install **Obsidian** from the App Store
+2. Create a new vault (local storage)
+3. Install the LiveSync plugin (Community plugins in the iOS app)
+4. Use the Setup URI from one of your other devices
+5. Sync starts right away
+
+---
+
+## Sync modes explained
+
+| Mode | Description | Good for |
 |---|---|---|
-| **LiveSync** | Realtid — ändringar sprids direkt | Aktiv användning på flera enheter |
-| **Periodic** | Synkar var X:e minut | Lägre batterianvändning på mobil |
-| **On events** | Synkar vid öppning/stängning av fil | Kompromiss |
+| **LiveSync** | Real-time — changes propagate immediately | Active use across multiple devices |
+| **Periodic** | Syncs every X minutes | Lower battery use on mobile |
+| **On events** | Syncs when a file is opened/closed | A compromise |
 
 ---
 
-## Nästa steg
+## Next step
 
 → [5-sharing.md](5-sharing.md)

@@ -1,41 +1,41 @@
-# 3. CouchDB — Användare och databaser
+# 3. CouchDB — users and databases
 
-`setup-users.sh` sköter det mesta automatiskt. Det här dokumentet förklarar vad som skapades och hur du verifierar det.
-
----
-
-## Vad som skapas
-
-### Användare
-
-| Användare | Vault | Lösenord (källa) |
-| --- | --- | --- |
-| `admin` | Administration | `COUCHDB_ADMIN_PASSWORD` i `.env` |
-| `alice` (USER1_NAME) | vault-alice (privat) | `USER1_PASSWORD` i `.env` |
-| `bob` (USER2_NAME) | vault-bob (privat) | `USER2_PASSWORD` i `.env` |
-| `shared-user` | vault-shared (delad) | `SHARED_PASSWORD` i `.env` |
-
-> Exempelnamnen ovan (`alice`, `bob`) är platshållare. De faktiska namnen definieras i `ANPASSA HÄR`-blocket i `scripts/setup-users.sh`.
-
-### Databaser och behörigheter
-
-| Databas | Läs/skriv | Admin |
-| --- | --- | --- |
-| `vault-alice` | alice | (ingen, bara CouchDB-admin) |
-| `vault-bob` | bob | (ingen, bara CouchDB-admin) |
-| `vault-shared` | alice, bob, shared-user | (ingen, bara CouchDB-admin) |
-
-Privata vaults är isolerade — användare kan inte komma åt varandras vaults.
+`setup-users.sh` handles most of this automatically. This document explains what gets created and how to verify it.
 
 ---
 
-## Vad du behöver anpassa
+## What gets created
 
-Innan du kör `setup-users.sh` — redigera `ANPASSA HÄR`-blocket i toppen av scriptet:
+### Users
+
+| User | Vault | Password (source) |
+| --- | --- | --- |
+| `admin` | Administration | `COUCHDB_ADMIN_PASSWORD` in `.env` |
+| `alice` (USER1_NAME) | vault-alice (private) | `USER1_PASSWORD` in `.env` |
+| `bob` (USER2_NAME) | vault-bob (private) | `USER2_PASSWORD` in `.env` |
+| `shared-user` | vault-shared (shared) | `SHARED_PASSWORD` in `.env` |
+
+> The example names above (`alice`, `bob`) are placeholders. The actual names are defined in the "CUSTOMIZE HERE" block in `scripts/setup-users.sh`.
+
+### Databases and permissions
+
+| Database | Read/write | Admin |
+| --- | --- | --- |
+| `vault-alice` | alice | (none, only the CouchDB admin) |
+| `vault-bob` | bob | (none, only the CouchDB admin) |
+| `vault-shared` | alice, bob, shared-user | (none, only the CouchDB admin) |
+
+Private vaults are isolated — users cannot access each other's vaults.
+
+---
+
+## What you need to customize
+
+Before running `setup-users.sh` — edit the "CUSTOMIZE HERE" block near the top of the script:
 
 ```bash
-USER1_NAME="alice"       # ändra till ditt faktiska användarnamn
-USER1_DB="vault-alice"   # ändra till ditt faktiska databasnamn
+USER1_NAME="alice"       # change to your actual username
+USER1_DB="vault-alice"   # change to your actual database name
 
 USER2_NAME="bob"
 USER2_DB="vault-bob"
@@ -45,72 +45,72 @@ SHARED_DB="vault-shared"
 SHARED_MEMBERS=("$USER1_NAME" "$USER2_NAME" "$SHARED_NAME")
 ```
 
-Och lägg till matchande lösenord i `config/.env`:
+And add matching passwords to `config/.env`:
 
 ```env
-USER1_PASSWORD=starkt-lösenord-här
-USER2_PASSWORD=starkt-lösenord-här
-SHARED_PASSWORD=starkt-lösenord-här
+USER1_PASSWORD=your-strong-password-here
+USER2_PASSWORD=your-strong-password-here
+SHARED_PASSWORD=your-strong-password-here
 ```
 
-Samma sak för `scripts/compact-databases.sh` — uppdatera `DATABASES`-listan där med dina faktiska databasnamn.
+Same for `scripts/compact-databases.sh` — update the `DATABASES` list there with your actual database names.
 
 ---
 
-## Verifiera via Fauxton (webb-UI)
+## Verify via Fauxton (web UI)
 
-Öppna CouchDB-admin lokalt på NAS:en:
+Open the CouchDB admin UI locally on your NAS:
 
 ```
 http://localhost:5984/_utils/
 ```
 
-Logga in med admin-credentials och kontrollera:
+Log in with your admin credentials and check:
 
-- **Databases**: ska visa dina vaults
-- **_users**: ska visa alla vault-användare
+- **Databases**: should show your vaults
+- **_users**: should show all vault users
 
-> `/_utils` är blockerad externt via Cloudflare WAF (se `docs/2-cloudflare-tunnel.md`).
+> `/_utils` is blocked externally via the Cloudflare WAF (see `docs/2-cloudflare-tunnel.md`).
 
 ---
 
-## Verifiera via curl
+## Verify via curl
 
 ```bash
-# Lista databaser (som admin)
-curl -u admin:ADMIN_LÖSENORD https://<din-subdomän>/_all_dbs
+# List databases (as admin)
+curl -u admin:ADMIN_PASSWORD https://<your-subdomain>/_all_dbs
 
-# Testa att user1 kan nå sin vault
-curl -u alice:USER1_LÖSENORD https://<din-subdomän>/vault-alice
+# Test that user1 can reach their vault
+curl -u alice:USER1_PASSWORD https://<your-subdomain>/vault-alice
 
-# Testa att user1 INTE kan nå user2:s vault
-curl -u alice:USER1_LÖSENORD https://<din-subdomän>/vault-bob
-# Förväntat: {"error":"unauthorized",...}
+# Test that user1 CANNOT reach user2's vault
+curl -u alice:USER1_PASSWORD https://<your-subdomain>/vault-bob
+# Expected: {"error":"unauthorized",...}
 
-# Testa att user2 kan nå shared
-curl -u bob:USER2_LÖSENORD https://<din-subdomän>/vault-shared
-# Förväntat: {"db_name":"vault-shared",...}
+# Test that user2 can reach the shared vault
+curl -u bob:USER2_PASSWORD https://<your-subdomain>/vault-shared
+# Expected: {"db_name":"vault-shared",...}
 ```
 
 ---
 
-## Lägga till fler vaults senare
+## Adding more vaults later
 
-Lägg till i `ANPASSA HÄR`-blocket i `setup-users.sh` och kör scriptet igen:
+Add to the "CUSTOMIZE HERE" block in `setup-users.sh` and run the script again:
 
 ```bash
-# I config/.env
-USER3_PASSWORD=starkt-lösenord-här
+# In config/.env
+USER3_PASSWORD=your-strong-password-here
 
-# I scripts/setup-users.sh (ANPASSA HÄR-blocket)
+# In scripts/setup-users.sh (the CUSTOMIZE HERE block)
 USER3_NAME="carol"
 USER3_DB="vault-carol"
 ```
 
-Lägg sedan till `create_user`, `create_database` och `set_db_permissions`-anrop i scriptet, och uppdatera `DATABASES`-listan i `compact-databases.sh`.
+Then add matching `create_user`, `create_database`, and `set_db_permissions` calls in the script, and update the `DATABASES` list in `compact-databases.sh`.
 
 ---
 
-## Nästa steg
+## Next step
 
 → [4-obsidian-plugin.md](4-obsidian-plugin.md)
