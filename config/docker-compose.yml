@@ -27,7 +27,7 @@ services:
 
   cloudflared:
     # Pinned version — upgrade deliberately, see https://github.com/cloudflare/cloudflared/releases
-    image: cloudflare/cloudflared:2026.8.2
+    image: cloudflare/cloudflared:2026.10.4
     container_name: cloudflared-nas
     restart: unless-stopped
     # SECURITY: dedicated Docker network instead of network_mode: host.
